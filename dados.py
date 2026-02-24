@@ -1,10 +1,10 @@
 import requests
 import json
 
-GITHUB_TOKEN = "SEU_NOVO_TOKEN_AQUI"
-
+GITHUB_TOKEN = "TokenGitHub"
 API_URL = "https://api.github.com/graphql"
 
+# Query GraphQL que busca os repositórios e extrai as métricas exigidas (idade, issues, pull requests, etc.)
 query = """
 query ($cursor: String) {
   search(query: "stars:>10000 sort:stars-desc", type: REPOSITORY, first: 10, after: $cursor) {
@@ -29,23 +29,22 @@ query ($cursor: String) {
 """
 
 def fetch_repos():
+    # Cabeçalhos de autenticação obrigatórios para a API do GitHub
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
         "Content-Type": "application/json"
     }
     
-    print("Testando conexão com o GitHub API...")
+    # Inicia a busca sem nenhum marcador de página (primeira página)
     variables = {"cursor": None}
     
+    # Envia a requisição POST para a API
     response = requests.post(API_URL, json={'query': query, 'variables': variables}, headers=headers)
     
+    # Se a requisição for bem-sucedida, retorna os dados em formato JSON
     if response.status_code == 200:
-        dados = response.json()
-        print("✅ Conexão bem sucedida! Primeira página capturada.")
-        return dados
-    else:
-        print(f"❌ Erro: {response.status_code} - {response.text}")
-        return None
+        return response.json()
+    return None
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     fetch_repos()
