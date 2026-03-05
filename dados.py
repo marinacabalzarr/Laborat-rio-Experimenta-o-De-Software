@@ -6,13 +6,13 @@ import csv  # Adicionado para gerar o arquivo CSV
 # ==========================================
 # COLOQUE SEU NOVO TOKEN DO GITHUB AQUI
 # ==========================================
-GITHUB_TOKEN = "SEU_NOVO_TOKEN_AQUI"
+GITHUB_TOKEN = "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"
 API_URL = "https://api.github.com/graphql"
 
-# Aumentei para 20 repositórios por página para agilizar, mas mantendo a segurança
+# Alterado para first: 10 para evitar o erro 502 Bad Gateway
 query = """
 query ($cursor: String) {
-  search(query: "stars:>100 sort:stars-desc", type: REPOSITORY, first: 20, after: $cursor) {
+  search(query: "stars:>100 sort:stars-desc", type: REPOSITORY, first: 10, after: $cursor) {
     pageInfo {
       endCursor
       hasNextPage
@@ -42,9 +42,9 @@ def fetch_1000_repos():
     todos_repositorios = []
     cursor = None 
     
-    print("Iniciando a busca de 1000 repositórios. Isso pode levar de 3 a 5 minutos...")
+    print("Iniciando a busca de 1000 repositórios (de 10 em 10).")
+    print("Isso deve levar em torno de 5 a 8 minutos. Pode ir pegar um café! ☕")
     
-    # Aumentamos o limite para 1000 repositórios
     while len(todos_repositorios) < 1000:
         variables = {"cursor": cursor}
         
@@ -77,6 +77,7 @@ def fetch_1000_repos():
             else:
                 break
             
+            # Pausa de 2 segundos para respeitar o limite de requisições do GitHub
             time.sleep(2) 
             
         elif response.status_code in [502, 503]:
@@ -86,10 +87,10 @@ def fetch_1000_repos():
             print(f"❌ Erro fatal: {response.status_code} - {response.text}")
             break
             
+    # Retorna no máximo 1000, caso passe um pouquinho no último lote
     return todos_repositorios[:1000]
 
 def salvar_em_csv(repositorios, nome_arquivo='repositorios_sprint2.csv'):
-    # Define os cabeçalhos das colunas da nossa planilha
     cabecalhos = [
         "Nome do Repositorio", "Data de Criacao", "Data de Atualizacao", 
         "Linguagem Primaria", "Total de Releases", "Pull Requests Aceitos", 
@@ -99,15 +100,13 @@ def salvar_em_csv(repositorios, nome_arquivo='repositorios_sprint2.csv'):
     print(f"\\nIniciando a conversão para {nome_arquivo}...")
     
     with open(nome_arquivo, mode='w', newline='', encoding='utf-8') as arquivo_csv:
-        escritor = csv.writer(arquivo_csv, delimiter=';') # Usando ';' para o Excel abrir certinho no Brasil
+        escritor = csv.writer(arquivo_csv, delimiter=';')
         escritor.writerow(cabecalhos)
         
         for repo in repositorios:
-            # Extração segura: se não tiver linguagem, coloca "N/A"
             lang_node = repo.get("primaryLanguage")
             linguagem = lang_node.get("name") if lang_node else "N/A"
             
-            # Monta a linha com os dados do repositório
             linha = [
                 repo.get("nameWithOwner", ""),
                 repo.get("createdAt", ""),
@@ -125,8 +124,10 @@ if __name__ == "__main__":
     repos = fetch_1000_repos()
     
     if repos and len(repos) == 1000:
-        # Salva o arquivo CSV conforme exigido na Sprint 2
         salvar_em_csv(repos)
         print("🎉 SUCESSO! Arquivo 'repositorios_sprint2.csv' gerado perfeitamente!")
     else:
         print(f"⚠️ O script parou antes de atingir 1000. Total coletado: {len(repos) if repos else 0}")
+        # Tenta salvar mesmo se não tiver chegado a 1000 para você não perder os dados
+        if repos:
+            salvar_em_csv(repos, 'repositorios_incompletos.csv')
