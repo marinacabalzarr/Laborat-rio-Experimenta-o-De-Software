@@ -6,7 +6,7 @@ import csv  # Adicionado para gerar o arquivo CSV
 # ==========================================
 # COLOQUE SEU NOVO TOKEN DO GITHUB AQUI
 # ==========================================
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = ""
 API_URL = "https://api.github.com/graphql"
 
 # Alterado para first: 10 para evitar o erro 502 Bad Gateway
