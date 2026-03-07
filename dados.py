@@ -1,11 +1,8 @@
 import requests
 import json
 import time
-import csv  # Adicionado para gerar o arquivo CSV
+import csv 
 
-# ==========================================
-# COLOQUE SEU NOVO TOKEN DO GITHUB AQUI
-# ==========================================
 GITHUB_TOKEN = ""
 API_URL = "https://api.github.com/graphql"
 
@@ -43,7 +40,6 @@ def fetch_1000_repos():
     cursor = None 
     
     print("Iniciando a busca de 1000 repositórios (de 10 em 10).")
-    print("Isso deve levar em torno de 5 a 8 minutos. Pode ir pegar um café! ☕")
     
     while len(todos_repositorios) < 1000:
         variables = {"cursor": cursor}
@@ -125,7 +121,7 @@ if __name__ == "__main__":
     
     if repos and len(repos) == 1000:
         salvar_em_csv(repos)
-        print("🎉 SUCESSO! Arquivo 'repositorios_sprint2.csv' gerado perfeitamente!")
+        print(" Arquivo 'repositorios_sprint2.csv' gerado perfeitamente!")
     else:
         print(f"⚠️ O script parou antes de atingir 1000. Total coletado: {len(repos) if repos else 0}")
         # Tenta salvar mesmo se não tiver chegado a 1000 para você não perder os dados
