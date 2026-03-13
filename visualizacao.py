@@ -1,14 +1,19 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timezone
+import os # Biblioteca para manipulação de caminhos de arquivos
+
+# Define o estilo dos gráficos para todos
+plt.style.use('ggplot')
 
 # 1. Carregar os dados do CSV gerado na coleta
 # Usamos sep=';' porque foi assim que salvamos o arquivo
+nome_arquivo_csv = 'repositorios.csv'
 try:
-    df = pd.read_csv('repositorios.csv', sep=';')
-    print("✅ Dados carregados com sucesso!")
+    df = pd.read_csv(nome_arquivo_csv, sep=';')
+    print(f"✅ Dados carregados com sucesso de '{nome_arquivo_csv}'!")
 except FileNotFoundError:
-    print("❌ Erro: Arquivo 'repositorios.csv' não encontrado. Certifique-se de que ele está na mesma pasta.")
+    print(f"❌ Erro: Arquivo '{nome_arquivo_csv}' não encontrado. Certifique-se de que ele está na mesma pasta.")
     exit()
 
 # 2. Preparar e Calcular as novas colunas
@@ -32,7 +37,7 @@ df['Razao Issues Fechadas'] = df.apply(
 
 # 3. Sumarização dos Dados (Cálculo das Medianas)
 print("\n" + "="*50)
-print("RESULTADOS DAS MEDIANAS (Para o Relatório)")
+print("📊 RESULTADOS DAS MEDIANAS (Para o Relatório)")
 print("="*50)
 
 print(f"RQ 01 - Mediana de Idade: {df['Idade (Anos)'].median():.2f} anos")
@@ -47,50 +52,67 @@ print(contagem_linguagens)
 
 print("="*50)
 
-# 4. Visualização dos Dados (Gráficos)
-print("\nGerando gráficos...")
+# 4. Visualização dos Dados (Gerando gráficos SEPARADOS)
+print("\nGerando gráficos separados...")
 
-# Define o estilo dos gráficos
-plt.style.use('ggplot')
+# --- Gráfico 1: Distribuição da Idade (Histograma) - RQ 01 ---
+plt.figure(figsize=(10, 6)) # Cria uma figura nova e exclusiva para este gráfico
+plt.hist(df['Idade (Anos)'], bins=20, color='skyblue', edgecolor='black')
+plt.title('Distribuição de Idade dos Repositórios (RQ 01)', fontsize=14)
+plt.xlabel('Idade (Anos)', fontsize=12)
+plt.ylabel('Quantidade de Repositórios', fontsize=12)
+plt.grid(axis='y', alpha=0.75)
+plt.tight_layout() # Ajusta o layout para não cortar textos
+plt.savefig('grafico_rq01_idade.png', dpi=300) # Salva este gráfico individualmente
+print("✅ Salvo: 'grafico_rq01_idade.png'")
+plt.close() # Fecha a figura atual para liberar memória
 
-# Figura com 2 linhas e 2 colunas para agrupar os gráficos
-fig, axs = plt.subplots(2, 2, figsize=(15, 10))
-fig.suptitle('Análise dos Repositórios Populares no GitHub', fontsize=16)
+# --- Gráfico 2: Linguagens mais populares (Barras Horizontais) - RQ 05 ---
+plt.figure(figsize=(10, 8))
+# Usamos o plot do pandas sem passar 'ax' para que ele crie na figura atual
+contagem_linguagens.sort_values().plot(kind='barh', color='coral', edgecolor='black')
+plt.title('Top 10 Linguagens Primárias (RQ 05)', fontsize=14)
+plt.xlabel('Quantidade de Repositórios', fontsize=12)
+plt.ylabel('Linguagem Primária', fontsize=12)
+plt.tight_layout()
+plt.savefig('grafico_rq05_linguagens.png', dpi=300)
+print("✅ Salvo: 'grafico_rq05_linguagens.png'")
+plt.close()
 
-# Gráfico 1: Distribuição da Idade (Histograma)
-axs[0, 0].hist(df['Idade (Anos)'], bins=20, color='skyblue', edgecolor='black')
-axs[0, 0].set_title('Distribuição de Idade dos Repositórios (RQ 01)')
-axs[0, 0].set_xlabel('Idade (Anos)')
-axs[0, 0].set_ylabel('Quantidade de Repositórios')
+# --- Gráfico 3: Taxa de Issues Fechadas (Histograma) - RQ 06 ---
+plt.figure(figsize=(10, 6))
+plt.hist(df['Razao Issues Fechadas'], bins=20, color='lightgreen', edgecolor='black')
+plt.title('Distribuição da Taxa de Issues Fechadas (RQ 06)', fontsize=14)
+plt.xlabel('Taxa de Conclusão (%)', fontsize=12)
+plt.ylabel('Quantidade de Repositórios', fontsize=12)
+plt.grid(axis='y', alpha=0.75)
+plt.tight_layout()
+plt.savefig('grafico_rq06_issues.png', dpi=300)
+print("✅ Salvo: 'grafico_rq06_issues.png'")
+plt.close()
 
-# Gráfico 2: Linguagens mais populares (Gráfico de Barras Horizontais)
-contagem_linguagens.sort_values().plot(kind='barh', ax=axs[0, 1], color='coral', edgecolor='black')
-axs[0, 1].set_title('Top 10 Linguagens Primárias (RQ 05)')
-axs[0, 1].set_xlabel('Quantidade de Repositórios')
-
-# Gráfico 3: Taxa de Issues Fechadas (Histograma)
-axs[1, 0].hist(df['Razao Issues Fechadas'], bins=20, color='lightgreen', edgecolor='black')
-axs[1, 0].set_title('Distribuição da Taxa de Issues Fechadas (RQ 06)')
-axs[1, 0].set_xlabel('Taxa de Conclusão (%)')
-axs[1, 0].set_ylabel('Quantidade de Repositórios')
-
-# Gráfico 4: Tempo sem atualização (Boxplot)
-axs[1, 1].boxplot(df['Dias sem Atualizacao'], vert=False, patch_artist=True, boxprops=dict(facecolor='plum'))
-axs[1, 1].set_title('Dias desde a última atualização (RQ 04)')
-axs[1, 1].set_xlabel('Dias')
-
-# Ajusta o layout para não sobrepor os textos e exibe os gráficos na tela
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.show()
+# --- Gráfico 4: Tempo sem atualização (Boxplot) - RQ 04 ---
+plt.figure(figsize=(10, 4)) # Boxplots horizontais costumam ficar bons em formatos mais "achatados"
+plt.boxplot(df['Dias sem Atualizacao'], vert=False, patch_artist=True, boxprops=dict(facecolor='plum'))
+plt.title('Dias desde a última atualização (RQ 04)', fontsize=14)
+plt.xlabel('Dias', fontsize=12)
+# Remove o eixo Y que não é informativo para boxplots horizontais
+plt.yticks([]) 
+plt.tight_layout()
+plt.savefig('grafico_rq04_atualizacao.png', dpi=300)
+print("✅ Salvo: 'grafico_rq04_atualizacao.png'")
+plt.close()
 
 # =========================================================
-# BÔNUS: ANÁLISE DA RQ 07
+# 🌟 BÔNUS: ANÁLISE DA RQ 07 (Gerando gráfico SEPARADO)
 # =========================================================
 print("\n" + "="*50)
+print("🌟 RESULTADOS DO BÔNUS (RQ 07)")
 print("="*50)
 
 # 1. Defina aqui as linguagens citadas na reportagem do professor
-linguagens_da_reportagem = ['Python', 'TypeScript', 'JavaScript', 'Go', 'Rust'] 
+# Certifique-se de que estas são as linguagens exatas da reportagem!
+linguagens_da_reportagem = ['TypeScript', 'Python', 'JavaScript', 'Java', 'C++', 'C#'] 
 
 # 2. Cria uma nova coluna separando os repositórios em dois times
 df['Grupo'] = df['Linguagem Primaria'].apply(
@@ -106,25 +128,30 @@ comparacao_rq07.columns = ['Mediana de PRs', 'Mediana de Releases', 'Dias sem At
 print(comparacao_rq07)
 print("="*50)
 
-# (Opcional) Gráfico de barras simples para a RQ07 para você colocar no relatório
-fig2, ax2 = plt.subplots(1, 3, figsize=(15, 5))
-fig2.suptitle('Comparação: Linguagens Populares vs Outras (RQ 07)', fontsize=16)
+# (Opcional) Gráfico de barras comparativo separado para a RQ07
+print("Gerando gráfico do bônus separado...")
+plt.figure(figsize=(15, 6))
 
-comparacao_rq07['Mediana de PRs'].plot(kind='bar', ax=ax2[0], color=['gold', 'silver'], edgecolor='black')
-ax2[0].set_title('Contribuição Externa (PRs)')
-ax2[0].set_ylabel('Quantidade Mediana')
-ax2[0].tick_params(axis='x', rotation=0)
+# Define as posições das barras no eixo X
+r = range(len(comparacao_rq07))
+barWidth = 0.25
 
-comparacao_rq07['Mediana de Releases'].plot(kind='bar', ax=ax2[1], color=['gold', 'silver'], edgecolor='black')
-ax2[1].set_title('Frequência de Releases')
-ax2[1].tick_params(axis='x', rotation=0)
+# Cria as barras para cada métrica
+plt.bar(r, comparacao_rq07['Mediana de PRs'], color='gold', width=barWidth, edgecolor='grey', label='Mediana de PRs')
+plt.bar([x + barWidth for x in r], comparacao_rq07['Mediana de Releases'], color='silver', width=barWidth, edgecolor='grey', label='Mediana de Releases')
+plt.bar([x + 2*barWidth for x in r], comparacao_rq07['Dias sem Atualizar'], color='peru', width=barWidth, edgecolor='grey', label='Dias sem Atualizar')
 
-comparacao_rq07['Dias sem Atualizar'].plot(kind='bar', ax=ax2[2], color=['gold', 'silver'], edgecolor='black')
-ax2[2].set_title('Tempo sem Atualizar (Menos é Melhor)')
-ax2[2].set_ylabel('Dias')
-ax2[2].tick_params(axis='x', rotation=0)
-
+# Adiciona legendas e formatação ao gráfico
+plt.xlabel('Grupo de Linguagens', fontsize=12)
+plt.ylabel('Quantidade / Dias', fontsize=12)
+plt.title('Comparação de Métricas: Linguagens da Reportagem vs Outras (RQ 07)', fontsize=14)
+plt.xticks([x + barWidth for x in r], comparacao_rq07.index) # Define os nomes dos grupos no eixo X
+plt.legend() # Mostra a legenda das barras
+plt.grid(axis='y', alpha=0.5)
 plt.tight_layout()
-plt.show()
+plt.savefig('grafico_rq07_bonus.png', dpi=300)
+print("✅ Salvo: 'grafico_rq07_bonus.png'")
+plt.close()
 
-print("✅ Análise e visualização concluídas!")
+print("\n🎉 Análise e visualização concluídas com sucesso!")
+print("Todos os gráficos foram salvos como arquivos individuais na sua pasta.")
